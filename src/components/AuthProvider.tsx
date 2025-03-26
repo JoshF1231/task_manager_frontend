@@ -50,11 +50,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 username,
                 password,
             });
-            const { access_token } = response.data;
+            const  access_token  = response.data;
             localStorage.setItem('token', access_token);
             setIsAuthenticated(true);
+            console.log(access_token);
             setToken(access_token);
-            setUser(response.data.user); // Assuming the response includes user data
+            const userData = await fetchUserData(access_token);
+            setUser(userData);
             return access_token;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -97,3 +99,15 @@ export const useAuth = () =>{
     }
     return context;
 }
+
+const fetchUserData = async (token: string) => {
+    try {
+        const response = await axios.get(`${api_url}/user`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        throw error;
+    }
+};

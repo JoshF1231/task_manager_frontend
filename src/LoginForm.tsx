@@ -20,35 +20,14 @@ function LoginForm() {
         try{
             const token = await login(username, password);
             console.log(token);
+            localStorage.setItem('accessToken', token);
             navigate('/dashboard');
         }
         catch(error){
             console.log(error);
             alert('Login failed. Please check your credentials.');
         }
-        // axios.post(`${api_url}/login`, {
-        //     username,
-        //     password,
-        // })
-        //     .then(response => {
-        //         console.log(response.data);
-        //         alert("Login successful");
-        //     })
-        //     .catch(error => {
-        //         if (error.response) {
-        //             console.log(error.response.data);
-        //             console.log(error.response.status);
-        //             console.log(error.response.headers);
-        //         } else if (error.request) {
-        //             // The request was made but no response was received
-        //             console.log(error.request);
-        //         } else {
-        //             // Something happened in setting up the request that triggered an Error
-        //             console.log('Error', error.message);
-        //         }
-        //         console.log(error.config);
-        //         alert("Login failed. Please check the console for more details.");
-        //     });
+
     }
 
     return(
