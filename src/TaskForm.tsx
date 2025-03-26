@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface Task {
-    id: number | undefined;
+    id: number;
     title: string;
     description?: string;
     due_date?: string;
@@ -27,6 +27,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSave, onCancel }) => {
         e.preventDefault();
         onSave(formData); // Call the parent function to save the task
     };
+
 
     return (
         <form className="task-form" onSubmit={handleSubmit}>

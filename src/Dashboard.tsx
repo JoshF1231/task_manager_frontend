@@ -9,7 +9,7 @@ const api_url = 'http://localhost:5000';
 
 
 interface Task {
-    id: number | undefined;
+    id: number;
     title: string;
     description?: string;
     due_date?: string;
@@ -81,6 +81,19 @@ const Dashboard: React.FC = () => {
         }
     };
 
+    const handleDeleteTask = async (id: number) => {
+        if (window.confirm('Are you sure you want to delete this task?')) {
+            try {
+                await axios.delete(`http://localhost:5000/tasks/${id}`, {
+                    headers: {Authorization: `Bearer ${auth.token}`},
+                });
+                setTasks(tasks.filter(task => task.id !== id));
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+    };
+
     return (
         <div className="dashboard">
             <h1>Your Tasks</h1>
@@ -103,6 +116,7 @@ const Dashboard: React.FC = () => {
                             {task.due_date && <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>}
                             <div className="task-actions">
                                 <button onClick={() => setEditingTask(task)}>Edit</button>
+                                <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
                             </div>
                         </li>
                     ))}
