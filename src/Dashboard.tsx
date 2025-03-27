@@ -84,7 +84,20 @@ const Dashboard: React.FC = () => {
                 const response = await axios.put(`http://localhost:5000/tasks/${updatedTask.id}`, updatedTask, {
                     headers: {Authorization: `Bearer ${auth.token}`},
                 });
-                setTasks(tasks.map(task => (task.id === updatedTask.id ? response.data : task)));
+                //setTasks(tasks.map(task => (task.id === updatedTask.id ? response.data : task)));
+                setTasks(prevTasks => {
+                    return prevTasks.map(task => {
+                        if (task.id === updatedTask.id) {
+                            // Find the existing task in the previous state
+                            const existingTask = prevTasks.find(t => t.id === updatedTask.id);
+
+                            // Merge the updated task data from the response with the existing subtasks
+                            return { ...response.data, subtasks: existingTask ? existingTask.subtasks : [] };
+                        } else {
+                            return task;  // Return other tasks unchanged
+                        }
+                    });
+                });
                 toast.success('Task saved successfully');
             } else {
                 // Create new task
@@ -253,8 +266,27 @@ const Dashboard: React.FC = () => {
                                             placeholder="New subtask title"
                                             value={newSubtaskTitle}
                                             onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                            style={{
+                                                width: '90%',
+                                                padding: '10px',
+                                                marginBottom: '10px',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                fontSize: '14px',
+                                            }}
                                         />
-                                        <button onClick={() => handleAddSubtask(task.id, newSubtaskTitle)}>
+                                        <button
+                                            onClick={() => handleAddSubtask(task.id, newSubtaskTitle)}
+                                            style={{
+                                                backgroundColor: 'rgba(188,188,188,0.18)',
+                                                color: 'white',
+                                                padding: '8px 12px',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                fontSize: '14px',
+                                            }}
+                                        >
                                             Add Subtask
                                         </button>
                                     </div>
