@@ -1,54 +1,89 @@
-# React + TypeScript + Vite
+# Project overview 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The Task Manager App is a full-stack web application designed to help users organize and manage their tasks efficiently. Built with React and TypeScript on the frontend, Flask (Python) on the backend, and MySQL for data storage, this app offers a comprehensive solution for personal task management.
 
-Currently, two official plugins are available:
+### Key Features
+* User Authentication: Secure signup and login functionality using JWT (JSON Web Tokens).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+* Task Management: Full CRUD (Create, Read, Update, Delete) operations for tasks.
 
-## Expanding the ESLint configuration
+* Subtasks: Support for nested subtasks within each main task.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+* Data Security: Passwords are securely hashed using bcrypt.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+### Technical Stack
+* Frontend: React with TypeScript
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+* Backend: Flask (Python)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+* Database: MySQL
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+* Authentication: JWT
+
+### Core Functionality
+* User registration and login
+
+* Create, view, update, and delete tasks
+
+* Add and manage subtasks
+
+# Setup instructions
+
+* Server: Run file server.py from the python project
+
+* MySQL: Import the database using self contained SQL file
+
+* Frontend: Run the project with "npx vite" within the react project folder, browse to http://localhost:5173/
+
+# API Endpoints
+
+This section documents the available API endpoints for the Task Manager application.  All task-related endpoints require a valid JWT token in the `Authorization` header.
+
+### Authentication
+
+*   **`POST /signup`**: Register a new user.
+    *   **Body:** `{username, email, password}`
+    *   **Response:** `{"message": "User registered successfully"}`
+*   **`POST /login`**: Authenticate and get a JWT.
+    *   **Body:** `{username, password}`
+    *   **Response:** `"<JWT_TOKEN>"`
+*   **`GET /user`**: Get current user's information.
+    *   **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+    *   **Response:** `{id, username, email, ...}`
+
+### Tasks
+
+*   **`GET /tasks`**: Get all tasks for the logged-in user.
+    *   **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+    *   **Response:** `[{id, user_id, title, description, status, due_date}, ...]`
+*   **`POST /tasks`**: Create a new task.
+    *   **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+    *   **Body:** `{title, description (optional), status (optional), due_date (optional)}`
+    *   **Response:** `{id, user_id, title, description, status, due_date}`
+*   **`PUT /tasks/<task_id>`**: Update a task.
+    *   **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+    *   **Body:** `{title (optional), description (optional), status (optional), due_date (optional)}`
+    *   **Response:** `{id, user_id, title, description, status, due_date}`
+*   **`DELETE /tasks/<task_id>`**: Delete a task (and its subtasks).
+    *   **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+    *   **Response:** `{"message": "Task deleted successfully"}`
+
+### Subtasks
+
+*   **`POST /tasks/<task_id>/subtasks`**: Add a subtask to a task.
+    *   **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+    *   **Body:** `{title, status (optional), description (optional), due_date (optional)}`
+    *   **Response:** `{id, task_id, title, status, description, due_date}`
+*   **`GET /tasks/<task_id>/subtasks`**: Get all subtasks for a task.
+    *   **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+    *   **Response:** `[{id, task_id, title, status, description, due_date}, ...]`
+*    **`PUT /tasks/<task_id>/subtasks/<subtask_id>`**:Update subtask Status.
+     *   **Headers:** `Authorization: Bearer <JWT_TOKEN>`
+     *   **Body:** `{status (required)}`
+     *   **Response:** `{"message": "Task successfully updated"}`
+
+### Notes:
+
+*   Date format is YYYY-MM-DD.
+*   All task-related endpoints require authentication.
+
