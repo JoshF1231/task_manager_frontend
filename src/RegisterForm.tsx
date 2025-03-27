@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from "axios";
+import {useNavigate} from "react-router-dom";
 const api_url = 'http://localhost:5000';
 
 const RegistrationForm = () => {
@@ -9,6 +10,8 @@ const RegistrationForm = () => {
         password: '',
         confirmPassword: ''
     });
+    const navigate = useNavigate();
+
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,6 +23,7 @@ const RegistrationForm = () => {
             .then(response => {
                 console.log(response.data);
                 alert("Register successful");
+                navigate('/login');
             })
             .catch(error => {
                 if (error.response) {

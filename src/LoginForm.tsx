@@ -3,11 +3,6 @@
 import {useState} from 'react';
 import { Link , useNavigate} from 'react-router-dom';
 import {useAuth} from "./components/AuthProvider.tsx";
-import axios from 'axios';
-
-
-const api_url = 'http://localhost:5000';
-
 
 function LoginForm() {
     const [username, setUserName] = useState('');
@@ -15,11 +10,10 @@ function LoginForm() {
     const {login} = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         try{
             const token = await login(username, password);
-            console.log(token);
             localStorage.setItem('accessToken', token);
             navigate('/dashboard');
         }

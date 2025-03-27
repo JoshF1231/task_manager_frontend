@@ -1,0 +1,60 @@
+.task-form {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.task-form input[type="text"],
+.task-form textarea,
+.task-form select,
+.task-form input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.task-form textarea {
+    height: 100px;
+    resize: vertical;
+}
+
+.task-form select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23343a40' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.task-form button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.task-form button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    margin-right: 10px;
+}
+
+.task-form button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+.task-form button[type="button"] {
+    background-color: #6c757d;
+    color: white;
+}
+
+.task-form button[type="button"]:hover {
+    background-color: #545b62;
+}

@@ -3,9 +3,20 @@ import { useAuth } from './components/AuthProvider';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
-import TaskForm from "./TaskForm.tsx"; // We'll create this CSS file for styling
+import TaskForm from "./TaskForm.tsx";
+import {toast, ToastContainer} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const api_url = 'http://localhost:5000';
+
+interface Subtask {
+    id: number;
+    title?: string;
+    description?: string;
+    status: 'pending' | 'done';
+    due_date?: string;
+    task_id: number;
+}
 
 
 interface Task {
@@ -15,12 +26,16 @@ interface Task {
     due_date?: string;
     user_id?: number;
     status: 'pending' | 'done';
+    subtasks: Subtask[];
 }
 
 const Dashboard: React.FC = () => {
     const auth = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [expandedTasks, setExpandedTasks] = useState<number[]>([]);
+    const [newSubtaskTitle, setNewSubtaskTitle] = useState<string>("");
+
 
 
     useEffect(() => {
@@ -37,22 +52,29 @@ const Dashboard: React.FC = () => {
     const fetchTasks = async () => {
         try {
             const response = await axios.get(api_url + '/tasks', {
-                headers: {Authorization: `Bearer ${auth.token}`}
+                headers: { Authorization: `Bearer ${auth.token}` },
             });
 
             if (Array.isArray(response.data)) {
-                setTasks(response.data);
+                // Ensure each task has an empty subtasks array if not provided by the API
+                const tasksWithSubtasks = response.data.map((task: Task) => ({
+                    ...task,
+                    subtasks: task.subtasks || [], // Initialize subtasks as an empty array
+                }));
+                setTasks(tasksWithSubtasks);
             } else if (response.data.message === "No tasks found") {
                 setTasks([]); // Set to empty array if no tasks
             } else {
-                console.error('Unexpected data format:', response.data);
+                console.error("Unexpected data format:", response.data);
                 setTasks([]); // Set to empty array as fallback
             }
         } catch (error) {
-            console.error('Error fetching tasks:', error);
-            setTasks([]); // Set to empty array on error
+            console.error("Error fetching tasks:", error);
+            setTasks([]);
+            toast.error("Failed to fetch tasks");
         }
     };
+
 
 
     const handleSaveTask = async (updatedTask: Task) => {
@@ -63,21 +85,20 @@ const Dashboard: React.FC = () => {
                     headers: {Authorization: `Bearer ${auth.token}`},
                 });
                 setTasks(tasks.map(task => (task.id === updatedTask.id ? response.data : task)));
+                toast.success('Task saved successfully');
             } else {
                 // Create new task
-                const response = await axios.post('http://localhost:5000/tasks', {
-                    title: updatedTask.title,
-                    description: updatedTask.description,
-                    due_date: updatedTask.due_date,
-                    status: 'pending',
-                }, {
+                const response = await axios.post('http://localhost:5000/tasks', updatedTask, {
                     headers: {Authorization: `Bearer ${localStorage.getItem('token')}`},
                 });
+                console.log(updatedTask.due_date);
                 setTasks([...tasks, response.data]);
+                toast.success('Task created successfully');
             }
             setEditingTask(null); // Close the form
         } catch (error) {
             console.error('Error saving task:', error);
+            toast.error('Failed to create task:');
         }
     };
 
@@ -88,19 +109,114 @@ const Dashboard: React.FC = () => {
                     headers: {Authorization: `Bearer ${auth.token}`},
                 });
                 setTasks(tasks.filter(task => task.id !== id));
+                toast.success('Task deleted successfully');
             } catch (error) {
                 console.error('Error deleting task:', error);
+                toast.error('Failed to delete task:');
             }
         }
     };
+
+
+
+    const toggleTaskExpansion = async (taskId: number) => {
+        if (expandedTasks.includes(taskId)) {
+            setExpandedTasks(expandedTasks.filter((id) => id !== taskId));
+        } else {
+            const subtasks = await fetchSubtasks(taskId);
+            setTasks(prevTasks => {
+                const updatedTasks = prevTasks.map(task =>
+                    task.id === taskId ? { ...task, subtasks: subtasks } : task
+                );
+                return updatedTasks;
+            });
+            setExpandedTasks(prev => [...prev, taskId]);
+        }
+    };
+
+
+    const fetchSubtasks = async (taskId: number) => {
+        try {
+            const response = await axios.get(`${api_url}/tasks/${taskId}/subtasks`, {
+                headers: {Authorization: `Bearer ${auth.token}`}
+            });
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching subtasks for task ${taskId}:`, error);
+            toast.error(`Failed to fetch subtasks for task ${taskId}`);
+            return [];
+        }
+    };
+
+    const handleAddSubtask = async (taskId: number, title: string) => {
+        try {
+            const subtaskData = {
+                title: title,
+                description: '',
+                status: 'pending',
+                due_date: null
+            };
+
+            const response = await axios.post(`${api_url}/tasks/${taskId}/subtasks`, subtaskData, {
+                headers: { Authorization: `Bearer ${auth.token}` },
+            });
+            const newSubtask = response.data;
+
+            setTasks(prevTasks => prevTasks.map(task =>
+                task.id === taskId
+                    ? { ...task, subtasks: [...(task.subtasks || []), newSubtask] }
+                    : task
+            ));
+
+            setNewSubtaskTitle("");
+            toast.success('Subtask added successfully');
+        } catch (error) {
+            console.error('Error adding subtask:', error);
+            toast.error('Failed to add subtask');
+        }
+    };
+
+    const handleUpdateSubtaskStatus = async (taskId: number, subtaskId: number, newStatus: 'pending' | 'done') => {
+        try {
+            await axios.put(`${api_url}/tasks/${taskId}/subtasks/${subtaskId}`, { status: newStatus }, {
+                headers: { Authorization: `Bearer ${auth.token}` },
+            });
+
+            setTasks(tasks.map(task => {
+                if (task.id === taskId) {
+                    const updatedSubtasks = task.subtasks.map(subtask =>
+                        subtask.id === subtaskId ? { ...subtask, status: newStatus } : subtask
+                    );
+                    return { ...task, subtasks: updatedSubtasks };
+                }
+                return task;
+            }));
+            toast.success('Subtask status updated successfully');
+        } catch (error) {
+            console.error('Error updating subtask status:', error);
+            toast.error('Failed to update subtask status');
+        }
+    };
+
 
     return (
         <div className="dashboard">
             <h1>Your Tasks</h1>
             <button
-                onClick={() => setEditingTask({id: 0, title: '', description: '', status: 'pending', due_date: ''})}>
+                onClick={() =>
+                    setEditingTask({
+                        id: 0,
+                        title: "",
+                        description: "",
+                        status: "pending",
+                        due_date: "",
+                        subtasks: [], // Initialize subtasks as an empty array for new tasks
+                    })
+                }
+            >
                 Add New Task
             </button>
+
             {editingTask && (
                 <TaskForm task={editingTask} onSave={handleSaveTask} onCancel={() => setEditingTask(null)}/>
             )}
@@ -108,27 +224,58 @@ const Dashboard: React.FC = () => {
                 <ul className="task-list">
                     {tasks.map(task => (
                         <li key={task.id} className="task-item">
-                            <div className="task-header">
+                            <div className="task-header" onClick={() => toggleTaskExpansion(task.id)}>
                                 <h3>{task.title}</h3>
                                 <span className={`status ${task.status}`}>{task.status}</span>
                             </div>
-                            <p>{task.description}</p>
-                            {task.due_date && <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>}
-                            <div className="task-actions">
-                                <button onClick={() => setEditingTask(task)}>Edit</button>
-                                <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
-                            </div>
+                            {expandedTasks.includes(task.id) && (
+                                <div className="task-details">
+                                    <p>{task.description}</p>
+                                    {task.due_date && <p>Due: {new Date(task.due_date).toLocaleDateString()}</p>}
+                                    <h4>Subtasks:</h4>
+                                    <ul className="subtask-list">
+                                        {task.subtasks && task.subtasks.map(subtask => (
+                                            <li key={subtask.id} className="subtask-item">
+                                                <span>{subtask.title}</span>
+                                                <select
+                                                    value={subtask.status}
+                                                    onChange={(e) => handleUpdateSubtaskStatus(task.id, subtask.id, e.target.value as 'pending' | 'done')}
+                                                >
+                                                    <option value="pending">Pending</option>
+                                                    <option value="done">Done</option>
+                                                </select>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <div className="add-subtask">
+                                        <input
+                                            type="text"
+                                            placeholder="New subtask title"
+                                            value={newSubtaskTitle}
+                                            onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                        />
+                                        <button onClick={() => handleAddSubtask(task.id, newSubtaskTitle)}>
+                                            Add Subtask
+                                        </button>
+                                    </div>
+                                    <div className="task-actions">
+                                        <button onClick={() => setEditingTask(task)}>
+                                            Edit
+                                        </button>
+                                        <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
+                                    </div>
+                                </div>
+                            )}
                         </li>
                     ))}
                 </ul>
             ) : (
                 <p>No tasks found. Start by adding a new task!</p>
             )}
+            <ToastContainer/>
         </div>
     );
-
 }
-
 
 export default Dashboard;
 

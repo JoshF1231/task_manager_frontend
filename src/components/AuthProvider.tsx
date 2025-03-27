@@ -2,7 +2,6 @@ import{
     createContext,
     useContext,
     useEffect,
-    useLayoutEffect,
     useState,
 } from "react";
 import axios, {AxiosError} from "axios";
@@ -40,7 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const token = localStorage.getItem('token');
         if (token) {
             setIsAuthenticated(true);
-            // You might want to fetch user data here
         }
     }, []);
 
